@@ -1,57 +1,155 @@
+//Round Robin Scheduling
+
 #include <iostream>
-#include<stdio.h>
+#include <cstdlib>
+#include <queue>
+#include <cstdio>
 
-int main()
-{
-    // initlialize the variable name
-    int i, NOP, sum=0,count=0, y, quant, wt=0, tat=0, at[10], bt[10], temp[10];
-    float avg_wt, avg_tat;
-    printf(" Total number of process in the system: ");
-    scanf("%d", &NOP);
-    y = NOP; // Assign the number of process to variable y
+using namespace std;
 
-// Use for loop to enter the details of the process like Arrival time and the Burst Time
-    for(i=0; i<NOP; i++) {
-        printf("\n Enter the Arrival and Burst time of the Process[%d]\n", i+1);
-        printf(" Arrival time is: \t");  // Accept arrival time
-        scanf("%d", &at[i]);
-        printf(" \nBurst time is: \t"); // Accept the Burst time
-        scanf("%d", &bt[i]);
-        temp[i] = bt[i]; // store the burst time in temp array
-    }
-// Accept the Time qunat
-    printf("Enter the Time Quantum for the process: \t");
-    scanf("%d", &quant);
-// Display the process No, burst time, Turn Around Time and the waiting time
-    printf("\n Process No \t\t Burst Time \t\t TAT \t\t Waiting Time ");
-    for(sum=0, i = 0; y!=0; ) {
-        if(temp[i] <= quant && temp[i] > 0) { // define the conditions
-            sum = sum + temp[i];
-            temp[i] = 0;
-            count=1;
-        } else if(temp[i] > 0) {
-            temp[i] = temp[i] - quant;
-            sum = sum + quant;
-        }
-        if(temp[i]==0 && count==1) {
-            y--; //decrement the process no.
-            printf("\nProcess No[%d] \t\t %d\t\t\t\t %d\t\t\t %d", i+1, bt[i], sum-at[i], sum-at[i]-bt[i]);
-            wt = wt+sum-at[i]-bt[i];
-            tat = tat+sum-at[i];
-            count =0;
-        }
-        if(i==NOP-1) {
-            i=0;
-        } else if(at[i+1]<=sum) {
-            i++;
-        } else {
-            i=0;
-        }
-    }
-// represents the average waiting time and Turn Around time
-    avg_wt = wt * 1.0/NOP;
-    avg_tat = tat * 1.0/NOP;
-    printf("\n Average Turn Around Time: \t%f", avg_wt);
-    printf("\n Average Waiting Time: \t%f", avg_tat);
+struct process {
+    int id, at, bt, st, ft, pr;
+    float wt, tat;
+};
+
+process p[10], p1[10], temp;
+queue < int > q1;
+
+int accept(int ch);
+void turnwait(int n);
+void display(int n);
+void ganttrr(int n);
+
+//driver code
+int main() {
+    int i, n, ts, ch, j, x;
+
+    p[0].tat = 0;
+    p[0].wt = 0;
+
+    n = accept(ch);
+    ganttrr(n);
+    turnwait(n);
+
+    display(n);
+
     return 0;
+}
+
+int accept(int ch) {
+    int i, n;
+
+    printf("Enter the Total Number of Process to Round Robin: ");
+    scanf("%d", & n);
+
+    if (n == 0) {
+        printf("Invalid");
+        exit(1);
+    }
+
+    cout << endl;
+
+    for (i = 1; i <= n; i++) {
+        printf("Enter an Arrival Time of the Process to Round Robin P%d: ", i);
+        scanf("%d", & p[i].at);
+        p[i].id = i;
+    }
+
+    cout << endl;
+
+    for (i = 1; i <= n; i++) {
+        printf("Enter a Burst Time of the Process to Round Robin P%d: ", i);
+        scanf("%d", & p[i].bt);
+    }
+
+    for (i = 1; i <= n; i++) {
+        p1[i] = p[i];
+    }
+
+    return n;
+}
+
+void ganttrr(int n) {
+    int i, ts, m, nextval, nextarr;
+
+    nextval = p1[1].at;
+    i = 1;
+
+    cout << "\nEnter the Time Slice or Quantum: ";
+    cin >> ts;
+
+    for (i = 1; i <= n && p1[i].at <= nextval; i++) {
+        q1.push(p1[i].id);
+    }
+
+    while (!q1.empty()) {
+        m = q1.front();
+        q1.pop();
+
+        if (p1[m].bt >= ts) {
+            nextval = nextval + ts;
+        } else {
+            nextval = nextval + p1[m].bt;
+        }
+
+        if (p1[m].bt >= ts) {
+            p1[m].bt = p1[m].bt - ts;
+        } else {
+            p1[m].bt = 0;
+        }
+
+        while (i <= n && p1[i].at <= nextval) {
+            q1.push(p1[i].id);
+            i++;
+        }
+
+        if (p1[m].bt > 0) {
+            q1.push(m);
+        }
+
+        if (p1[m].bt <= 0) {
+            p[m].ft = nextval;
+        }
+    }
+}
+
+void turnwait(int n) {
+    int i;
+
+    for (i = 1; i <= n; i++) {
+        p[i].tat = p[i].ft - p[i].at;
+        p[i].wt = p[i].tat - p[i].bt;
+        p[0].tat = p[0].tat + p[i].tat;
+        p[0].wt = p[0].wt + p[i].wt;
+    }
+
+    p[0].tat = p[0].tat / n;
+    p[0].wt = p[0].wt / n;
+}
+
+void display(int n) {
+    int i;
+
+    /*
+    Here
+    at = Arrival time,
+    bt = Burst time,
+    time_quantum= Quantum time
+    tat = Turn around time,
+    wt = Waiting time
+    */
+
+    cout << "\n=====================================================\n";
+    cout << "\n\nHere AT = Arrival Time\nBT = Burst Time\nTAT = Turn Around Time\nWT = Waiting Time\n";
+
+    cout << "\n===================TABLE==============================\n";
+    printf("\nProcess\tAT\tBT\tFT\tTAT\t\tWT");
+
+    for (i = 1; i <= n; i++) {
+        printf("\nP%d\t%d\t%d\t%d\t%f\t%f", p[i].id, p[i].at, p[i].bt, p[i].ft, p[i].tat, p[i].wt);
+    }
+
+    cout << "\n=====================================================\n";
+    printf("\nAverage Turn Around Time: %f", p[0].tat);
+    printf("\nAverage Waiting Time: %f\n", p[0].wt);
 }
